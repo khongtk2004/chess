@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Chess | Powered by Groq AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Chess With AI</title>
 
     <link rel="stylesheet"
       href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -11,14 +11,19 @@
     <style>
         :root {
             --neon-green: #00ff41;
-            --dark-bg: #0d0d0d;
-            --panel-bg: #1a1a1a;
+            --dark-bg: #0a0a0a;
+            --panel-bg: #111111;
+            --border-glow: rgba(0, 255, 65, 0.3);
+        }
+
+        * {
+            user-select: none;
         }
 
         body {
-            background-color: var(--dark-bg);
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
+            background: radial-gradient(circle at 20% 30%, #0a0f0a, #030603);
+            color: #e0e0e0;
+            font-family: 'Courier New', 'Fira Code', monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -31,79 +36,127 @@
         .header {
             text-align: center;
             margin-bottom: 20px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(2px);
+            padding: 10px 25px;
+            border-radius: 12px;
+            border-left: 3px solid var(--neon-green);
+            border-right: 3px solid var(--neon-green);
         }
 
         h1 {
             color: var(--neon-green);
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             margin: 0;
+            font-size: 1.6rem;
+            text-shadow: 0 0 6px #00ff41, 0 0 1px #0f0;
+        }
+
+        .sub {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            letter-spacing: 1px;
         }
 
         #board {
-            width: 400px;
-            border: 4px solid #333;
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
+            width: 460px;
+            border: 2px solid #2a2a2a;
+            box-shadow: 0 0 28px rgba(0, 255, 65, 0.25), 0 0 8px #00000088;
+            border-radius: 4px;
         }
 
         .status-container {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 22px;
+            padding: 14px 18px;
             background: var(--panel-bg);
-            border: 1px solid #333;
-            width: 380px;
+            border: 1px solid #2a2a2a;
+            width: 420px;
             text-align: center;
+            border-radius: 8px;
+            backdrop-filter: blur(2px);
+            transition: all 0.2s;
         }
 
         #status {
             color: var(--neon-green);
             font-weight: bold;
+            font-size: 1.1rem;
+            text-shadow: 0 0 3px #0f0;
         }
 
         .controls {
-            margin-top: 20px;
+            margin-top: 24px;
+            display: flex;
+            gap: 20px;
         }
 
         .btn {
             background: transparent;
-            border: 1px solid var(--neon-green);
+            border: 1.5px solid var(--neon-green);
             color: var(--neon-green);
-            padding: 10px 20px;
+            padding: 8px 24px;
             cursor: pointer;
             text-transform: uppercase;
-            font-family: inherit;
-            transition: 0.3s;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: 0.2s;
+            border-radius: 40px;
+            letter-spacing: 1px;
         }
 
         .btn:hover {
             background: var(--neon-green);
             color: black;
+            box-shadow: 0 0 12px var(--neon-green);
+            border-color: #fff;
         }
 
         .error-log {
-            color: #ff4444;
-            font-size: 12px;
-            margin-top: 10px;
+            color: #ff7777;
+            font-size: 0.75rem;
+            margin-top: 12px;
             max-width: 400px;
+            word-break: break-word;
+            background: #1a0a0a88;
+            padding: 5px 8px;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+
+        .thinking {
+            animation: pulse 0.9s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; text-shadow: 0 0 0px #0f0; }
+            100% { opacity: 1; text-shadow: 0 0 6px #0f0; }
+        }
+
+        @media (max-width: 550px) {
+            #board { width: 95vw; }
+            .status-container { width: 85vw; }
+            .btn { padding: 6px 16px; }
+            h1 { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Neural Chess v1.0 write by Khong</h1>
-        <p>You: White | AI: Black</p>
+        <h1>⚡ NEURAL CHESS v1.0 ⚡</h1>
+        <div class="sub">YOU : WHITE | AI : BLACK (Groq LLM)</div>
     </div>
 
     <div id="board"></div>
 
     <div class="status-container">
-        <div>STATUS: <span id="status">Initializing...</span></div>
+        <div>⚙️ STATUS: <span id="status">Initializing interface...</span></div>
         <div id="error-display" class="error-log"></div>
     </div>
 
     <div class="controls">
-        <button class="btn" onclick="resetGame()">Restart System</button>
+        <button class="btn" onclick="resetGame()">⟳ RESTART SYSTEM</button>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -111,29 +164,93 @@
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
     <script>
-        // API Configuration
-        const API_KEY = "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";
-        const MODEL = "llama-3.3-70b-versatile";
+        // --------------------------------------------------------------
+        // GROQ API KEY (UPDATED WITH console.groq.com VALID KEY)
+        // 🔐 Replace with your actual key from console.groq.com
+        // --------------------------------------------------------------
+        const API_KEY = "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";
+        
+        // Use the recommended Groq model for fast inference / chess reasoning
+        const MODEL = "llama3-70b-8192";   // Groq's high-performance model (fast & smart)
 
         var board = null;
         var game = new Chess();
         var $status = $('#status');
         var $error = $('#error-display');
+        var aiThinking = false;      // Prevent concurrent AI calls
+        var movePending = false;     // Avoid overlapping AI triggers
 
-        function onDragStart (source, piece, position, orientation) {
-            // Do not pick up pieces if the game is over
-            if (game.game_over()) return false;
-
-            // Only pick up pieces for White
-            if (piece.search(/^b/) !== -1) return false;
+        // --------------------------------------------------------------
+        // Helper: Show error / status
+        // --------------------------------------------------------------
+        function setStatusMessage(msg, isError = false) {
+            $status.html(msg);
+            if(isError) {
+                $error.html(`⚠️ ${msg.substring(0, 140)}`);
+            } else {
+                if(!msg.includes("THINKING")) $error.html("");
+            }
         }
 
+        function showError(msg) {
+            console.error("[ERROR]", msg);
+            $error.html(`⚠️ ${msg.substring(0, 180)}`);
+            setStatusMessage("ERROR - RETRY MOVE", false);
+        }
+
+        // --------------------------------------------------------------
+        // Update game status (check, checkmate, draw, turn)
+        // --------------------------------------------------------------
+        function updateStatus() {
+            if (game.game_over()) {
+                if (game.in_checkmate()) {
+                    let loser = game.turn() === 'w' ? "WHITE" : "BLACK";
+                    setStatusMessage(`⚡ CHECKMATE! ${loser} defeated. GAME OVER ⚡`);
+                } else if (game.in_draw()) {
+                    setStatusMessage(`♟️ DRAW! Stalemate or insufficient material. ♟️`);
+                } else {
+                    setStatusMessage(`🏁 GAME TERMINATED 🏁`);
+                }
+                return;
+            }
+            
+            let turn = game.turn() === 'w' ? "YOUR TURN (WHITE)" : "AI THINKING... (BLACK)";
+            let checkStr = "";
+            if (game.in_check()) {
+                checkStr = " 🔔 CHECK! 🔔";
+            }
+            if (game.turn() === 'w') {
+                setStatusMessage(`⚪ YOUR MOVE ${checkStr}`);
+            } else {
+                if(!aiThinking) setStatusMessage(`⚫ AI EVALUATING... ${checkStr}`);
+                else setStatusMessage(`🧠 AI DEEP CALCULATION 🧠`);
+            }
+        }
+
+        // --------------------------------------------------------------
+        // AI Move via Groq API (console.groq.com)
+        // --------------------------------------------------------------
         async function makeAiMove() {
-            $status.html("AI IS THINKING...");
+            // Prevent AI move if game over, or already thinking, or not black's turn
+            if (game.game_over()) return;
+            if (game.turn() !== 'b') return;
+            if (aiThinking) {
+                console.log("AI already thinking, skipping duplicate call");
+                return;
+            }
+            
+            aiThinking = true;
+            movePending = true;
+            setStatusMessage("🤖 AI NEURAL NETWORK ACTIVATED... THINKING 🤖");
             $error.html("");
-
+            
             const fen = game.fen();
-
+            
+            // Build a prompt that guides Groq to output ONLY legal UCI move.
+            // Additional safety: we request move in format like "e7e5" or "g8f6"
+            const systemPrompt = `You are a world-class chess engine. Based on the FEN position, output only the best move for Black in strict UCI format (e.g., e7e5, g8f6, e2e4). Do not include any extra text, commentary, or punctuation. Return NOTHING but the move.`;
+            
+            const userPrompt = `FEN: ${fen}\nBlack to move. Provide the best UCI move:`;
 
             try {
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -145,96 +262,203 @@
                     body: JSON.stringify({
                         model: MODEL,
                         messages: [
-                            {
-                                role: "system",
-                                content: "You are a professional chess player. Return ONLY the move for Black in UCI format (e.g. e7e5 or g8f6) based on the FEN provided. No explanation."
-                            },
-                            { role: "user", content: "FEN: " + fen }
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
                         ],
-                        temperature: 0.2
+                        temperature: 0.15,      // low temp for deterministic moves
+                        max_tokens: 20,
+                        top_p: 0.9
                     })
                 });
 
-                const data = await response.json();
-
                 if (!response.ok) {
-                    throw new Error(data.error ? data.error.message : "API Request Failed");
+                    let errDetail = `API Error ${response.status}`;
+                    try {
+                        const errJson = await response.json();
+                        errDetail = errJson.error?.message || errDetail;
+                    } catch(e) {}
+                    throw new Error(`Groq API error: ${errDetail}`);
                 }
 
-                const moveText = data.choices[0].message.content.trim();
-                console.log("AI suggested:", moveText);
-
-                // Attempt to make the move
-                const move = game.move(moveText, { sloppy: true });
-
-                if (move === null) {
-                    console.warn("AI sent invalid move. Forcing random move.");
-                    const legalMoves = game.moves();
-                    game.move(legalMoves[Math.floor(Math.random() * legalMoves.length)]);
+                const data = await response.json();
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    throw new Error("Invalid API response structure");
                 }
-
+                
+                let rawMove = data.choices[0].message.content.trim();
+                console.log("[Groq AI RAW]:", rawMove);
+                
+                // Sanitize: remove any trailing dots, spaces, or newlines, also remove possible quotes
+                rawMove = rawMove.replace(/[^a-h0-9]/gi, '').toLowerCase();
+                if (rawMove.length < 4) {
+                    throw new Error(`Invalid move format: "${rawMove}"`);
+                }
+                
+                // Attempt to make the move (UCI format: e2e4, g1f3, etc)
+                let moveObj = null;
+                try {
+                    moveObj = game.move(rawMove, { sloppy: true });
+                } catch (e) {
+                    moveObj = null;
+                }
+                
+                // If move is invalid, fallback to a random legal move (keeping game alive)
+                if (moveObj === null) {
+                    console.warn("AI produced illegal move:", rawMove);
+                    const legalMoves = game.moves({ verbose: true });
+                    if (legalMoves.length === 0) {
+                        // no moves: game over (should have been caught)
+                        aiThinking = false;
+                        movePending = false;
+                        updateStatus();
+                        return;
+                    }
+                    const randomIdx = Math.floor(Math.random() * legalMoves.length);
+                    const fallbackMove = legalMoves[randomIdx];
+                    game.move(fallbackMove);
+                    console.log("Fallback random move used:", fallbackMove.san);
+                    setStatusMessage("AI used fallback move (illegal suggestion)", true);
+                    $error.html(`⚠️ AI hallucinated move: ${rawMove} → fallback applied`);
+                } else {
+                    console.log("AI moved successfully:", moveObj.san);
+                }
+                
+                // Update board UI
                 board.position(game.fen());
                 updateStatus();
-
+                
+                // If game ended after AI move, do not call anything else
+                if (game.game_over()) {
+                    aiThinking = false;
+                    movePending = false;
+                    updateStatus();
+                    return;
+                }
+                
             } catch (err) {
-                $status.html("SYSTEM ERROR");
-                $error.html("Details: " + err.message);
-                console.error(err);
+                console.error("Groq API call failed:", err);
+                showError(`AI communication failure: ${err.message}. Using random move.`);
+                
+                // Fallback: pick random legal move for Black to keep game responsive
+                try {
+                    const moves = game.moves({ verbose: true });
+                    if (moves.length > 0) {
+                        const randomMove = moves[Math.floor(Math.random() * moves.length)];
+                        game.move(randomMove);
+                        board.position(game.fen());
+                        updateStatus();
+                    } else {
+                        // stalemate or game over
+                        updateStatus();
+                    }
+                } catch (e2) {
+                    console.error("Even fallback move failed", e2);
+                }
+            } finally {
+                aiThinking = false;
+                movePending = false;
+                // After AI move, if game not over and it's white's turn, ready for human
+                if (!game.game_over() && game.turn() === 'w') {
+                    setStatusMessage("YOUR MOVE - DRAG PIECES");
+                } else if (!game.game_over() && game.turn() === 'b') {
+                    // safety: sometimes weird state, but normally turn should be white after AI move
+                    if (game.turn() === 'b') {
+                        // this would be odd, but schedule another AI attempt? prevent infinite loop
+                        if (!aiThinking) {
+                            setTimeout(() => makeAiMove(), 200);
+                        }
+                    }
+                }
+                updateStatus();
             }
         }
 
-        function onDrop (source, target) {
-            // see if the move is legal
-            var move = game.move({
+        // --------------------------------------------------------------
+        // Drag & Drop Handlers (chessboard.js)
+        // --------------------------------------------------------------
+        function onDragStart(source, piece, position, orientation) {
+            // No dragging if game over or AI thinking or not White's turn
+            if (game.game_over()) return false;
+            if (aiThinking || movePending) {
+                setStatusMessage("SYSTEM BUSY - WAIT FOR AI", false);
+                return false;
+            }
+            if (game.turn() !== 'w') {
+                setStatusMessage("NOT YOUR TURN - AI IS CALCULATING", false);
+                return false;
+            }
+            // Only allow white pieces to be dragged
+            if (piece.search(/^b/) !== -1) return false;
+            return true;
+        }
+
+        async function onDrop(source, target) {
+            // if game over or AI is thinking, reject move
+            if (game.game_over()) return 'snapback';
+            if (aiThinking || movePending) {
+                setStatusMessage("WAIT FOR AI TO FINISH ...", false);
+                return 'snapback';
+            }
+            if (game.turn() !== 'w') {
+                setStatusMessage("NOT YOUR TURN", false);
+                return 'snapback';
+            }
+            
+            // Attempt the move (always promote to queen for simplicity)
+            let move = game.move({
                 from: source,
                 to: target,
-                promotion: 'q' // NOTE: always promote to a queen for example simplicity
+                promotion: 'q'
             });
-
-            // illegal move
-            if (move === null) return 'snapback';
-
+            
+            if (move === null) {
+                // illegal move
+                setStatusMessage("ILLEGAL MOVE - TRY AGAIN", true);
+                return 'snapback';
+            }
+            
+            // Update UI after legal move
             updateStatus();
-
-            // Trigger AI move after user finishes animation
-            window.setTimeout(makeAiMove, 500);
+            board.position(game.fen());
+            
+            // Check if game ended after white move
+            if (game.game_over()) {
+                updateStatus();
+                return;
+            }
+            
+            // Now trigger AI move after slight delay (smooth animation)
+            setTimeout(() => {
+                if (!game.game_over() && game.turn() === 'b') {
+                    makeAiMove();
+                }
+            }, 280);
         }
-
-        // Update the board position after the piece snap
-        // for castling, en passant, pawn promotion
-        function onSnapEnd () {
+        
+        function onSnapEnd() {
+            // sync board position (just in case)
             board.position(game.fen());
         }
-
-        function updateStatus() {
-            var status = '';
-
-            var moveColor = 'White';
-            if (game.turn() === 'b') {
-                moveColor = 'Black';
-            }
-
-            if (game.in_checkmate()) {
-                status = 'GAME OVER - ' + moveColor + ' is in checkmate.';
-            } else if (game.in_draw()) {
-                status = 'GAME OVER - Draw';
-            } else {
-                status = moveColor + ' to move';
-                if (game.in_check()) {
-                    status += ' (CHECK)';
-                }
-            }
-
-            $status.html(status.toUpperCase());
-        }
-
+        
+        // --------------------------------------------------------------
+        // Reset Game fully
+        // --------------------------------------------------------------
         function resetGame() {
-            game.reset();
-            board.start();
+            // cancel any ongoing AI request by resetting flags
+            aiThinking = false;
+            movePending = false;
+            game = new Chess();     // fresh game instance
+            board.position(game.fen());
             updateStatus();
             $error.html("");
+            setStatusMessage("SYSTEM REBOOTED. WHITE MOVES FIRST.");
+            // If somehow black's turn due to weirdness? reset ensures white starts
+            console.log("Game reset, white to move");
         }
-
+        
+        // --------------------------------------------------------------
+        // Initialize Chessboard and status
+        // --------------------------------------------------------------
         var config = {
             draggable: true,
             position: 'start',
@@ -243,9 +467,32 @@
             onSnapEnd: onSnapEnd,
             pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
         };
+        
         board = ChessBoard('board', config);
-
         updateStatus();
+        setStatusMessage("⚡ SYSTEM READY | WHITE MOVES FIRST ⚡");
+        
+        // Expose reset globally
+        window.resetGame = resetGame;
+        
+        // Preload: small guard to ensure if AI is mis-triggered on start? no, only after user move
+        // Extra safety: ensure board and game state aligned
+        window.addEventListener('load', () => {
+            // sync board with game (just in case)
+            board.position(game.fen());
+            console.log("Cyber Chess online — Groq AI ready.");
+        });
+        
+        // Additional edge: if user resets while AI is thinking, override
+        const originalReset = resetGame;
+        window.resetGame = function() {
+            if (aiThinking) {
+                // force abort flags
+                aiThinking = false;
+                movePending = false;
+            }
+            originalReset();
+        };
     </script>
 </body>
 </html>
